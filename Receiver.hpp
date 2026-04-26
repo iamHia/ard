@@ -1,51 +1,52 @@
 #pragma once
 #include <Arduino.h>
-#include "Config.h"
-#include "MorseDictionary.h"
-#include "LightSensor.h"
-#include "myString.h"
+#include "Config.hpp"
+#include "MorseDictionary.hpp"
+#include "LightSensor.hpp"
+#include "myString.hpp"
 
 class Receiver {
-  LightSensor& ldr; 
-  unsigned long blockStart = 0;
+  LightSensor& ldr;
+  unsigned long pulseStart = 0;
   unsigned long gapStart = 0;
-  bool blocked = false;
-  myString morseBuf; 
+  bool receivingPulse = false;
+  myString morseBuf;
 
 public:
   Receiver(LightSensor& sensor) : ldr(sensor) {}
-  
-  char update(unsigned long now) {
-    bool isDark = ldr.isBlocked(); 
 
-    if (isDark && !blocked) { 
-      blocked = true; 
-      blockStart = now; 
-    } 
-    else if (!isDark && blocked) { 
-      blocked = false; 
+  char update(unsigned long now) {
+    bool laserActive = ldr.isLaserDetected();
+
+    if (laserActive && !receivingPulse) {
+      receivingPulse = true;
+      pulseStart = now;
+    } else if (!laserActive && receivingPulse) {
+      receivingPulse = false;
       gapStart = now;
-      unsigned long blockDur = now - blockStart;
-      
-      if (blockDur > 20 && morseBuf.length() < 9) {
-        if (blockDur < (Config::dotMs * 2)) {
-          morseBuf.append('.'); 
+
+      unsigned long pulseDur = now - pulseStart;
+
+      if (pulseDur > 20 && morseBuf.length() < 9) {
+        if (pulseDur < (Config::dotMs * 2)) {
+          morseBuf.append('.');
           Serial.print(F("."));
         } else {
-          morseBuf.append('-'); 
+          morseBuf.append('-');
           Serial.print(F("-"));
         }
       }
     }
 
-    if (!isDark && !blocked && morseBuf.length() > 0) {
+    if (!laserActive && !receivingPulse && morseBuf.length() > 0) {
       unsigned long gapDur = now - gapStart;
       if (gapDur > (Config::letterGap - 50)) {
-        char ch = decodeMorse(morseBuf.c_str()); 
-        morseBuf.clear(); 
+        char ch = decodeMorse(morseBuf.c_str());
+        morseBuf.clear();
         return ch;
       }
     }
-    return '\0'; 
+
+    return '\0';
   }
 };

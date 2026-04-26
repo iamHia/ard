@@ -1,9 +1,9 @@
 #pragma once
 #include <Arduino.h>
-#include "Config.h"
-#include "MorseDictionary.h"
-#include "Laser.h"
-#include "myString.h"
+#include "Config.hpp"
+#include "MorseDictionary.hpp"
+#include "Laser.hpp"
+#include "myString.hpp"
 
 class Transmitter {
   Laser& laser; 

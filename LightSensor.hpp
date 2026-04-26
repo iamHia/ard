@@ -8,5 +8,5 @@ public:
   LightSensor(int p, int thresh) : pin(p), threshold(thresh) {}
   void begin() { pinMode(pin, INPUT); }
   
-  bool isBlocked() { return analogRead(pin) < threshold; }
+  bool isLaserDetected() { return analogRead(pin) < threshold; }
 };
